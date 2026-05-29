@@ -11,7 +11,8 @@ pub struct Plugin {
     pub size: String,
     pub version: String,
     pub author: String,
-    #[serde(default)]
+    // v2 接口字段由 describe 改名为 description；保留旧名作为别名以兼容历史数据
+    #[serde(rename = "description", alias = "describe", default)]
     pub describe: String,
     #[serde(default)]
     pub file: String,
@@ -30,17 +31,28 @@ impl Plugin {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginCategory {
+    // v2 接口字段由 class 改名为 category；保留旧名作为别名以兼容历史数据
+    #[serde(rename = "category", alias = "class")]
     pub class: String,
     #[serde(default)]
     pub icon: Option<String>,
     pub list: Vec<Plugin>,
 }
 
+/// v2 聚合端点 all-plugins.json 的响应结构（CE 插件 + Edgeless 插件）
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CloudPEResponse {
+pub struct AllPluginsResponse {
     pub code: i32,
     pub message: String,
-    pub data: Vec<PluginCategory>,
+    pub data: AllPluginsData,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AllPluginsData {
+    #[serde(default)]
+    pub plugins: Vec<PluginCategory>,
+    #[serde(default)]
+    pub edgeless_plugins: Vec<PluginCategory>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -125,27 +137,34 @@ impl PluginManager {
         
         match mode {
             PluginMode::CloudPE | PluginMode::Edgeless => {
-                let mut plugins_response: CloudPEResponse = serde_json::from_str(&text)?;
-                
-                if plugins_response.code == 200 {
-                    for category in &mut plugins_response.data {
-                        let mut seen = HashSet::new();
-                        let mut unique_plugins = Vec::new();
-                        
-                        for plugin in &category.list {
-                            let key = plugin.get_unique_key();
-                            if seen.insert(key) {
-                                unique_plugins.push(plugin.clone());
-                            }
-                        }
-                        
-                        category.list = unique_plugins;
-                    }
-                    
-                    Ok(plugins_response.data)
-                } else {
-                    anyhow::bail!("获取插件列表失败: {}", plugins_response.message)
+                // v2 聚合端点 all-plugins.json：一次返回 CE 与 Edgeless 两类插件
+                let plugins_response: AllPluginsResponse = serde_json::from_str(&text)?;
+
+                if plugins_response.code != 200 {
+                    anyhow::bail!("获取插件列表失败: {}", plugins_response.message);
                 }
+
+                // 按当前模式选取对应的插件分类列表
+                let mut categories = match mode {
+                    PluginMode::Edgeless => plugins_response.data.edgeless_plugins,
+                    _ => plugins_response.data.plugins,
+                };
+
+                for category in &mut categories {
+                    let mut seen = HashSet::new();
+                    let mut unique_plugins = Vec::new();
+
+                    for plugin in &category.list {
+                        let key = plugin.get_unique_key();
+                        if seen.insert(key) {
+                            unique_plugins.push(plugin.clone());
+                        }
+                    }
+
+                    category.list = unique_plugins;
+                }
+
+                Ok(categories)
             }
             PluginMode::HotPE => {
                 let hotpe_response: HotPEResponse = match serde_json::from_str(&text) {

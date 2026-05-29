@@ -11,18 +11,19 @@ pub enum PluginMode {
 impl PluginMode {
     pub fn get_api_url(&self) -> &str {
         match self {
-            PluginMode::CloudPE => "https://api.cloud-pe.cn/GetPlugins/",
+            // CE 与 Edgeless 共用 v2 聚合端点（all-plugins.json），一次拿到两类插件
+            PluginMode::CloudPE => "https://api.cloud-pe.cn/v2/all-plugins.json",
             PluginMode::HotPE => "https://api.hotpe.top/API/HotPE/GetHPMList/",
-            PluginMode::Edgeless => "https://api.cloud-pe.cn/EdgelessPlugins/",
+            PluginMode::Edgeless => "https://api.cloud-pe.cn/v2/all-plugins.json",
             _ => "",
         }
     }
-    
+
     pub fn get_connect_test_url(&self) -> &str {
         match self {
-            PluginMode::CloudPE => "https://api.cloud-pe.cn/connecttest/",
+            PluginMode::CloudPE => "https://api.cloud-pe.cn/v2/all-plugins.json",
             PluginMode::HotPE => "https://api.hotpe.top/API/HotPE/GetHPMList/",
-            PluginMode::Edgeless => "https://api.cloud-pe.cn/EdgelessPlugins/",
+            PluginMode::Edgeless => "https://api.cloud-pe.cn/v2/all-plugins.json",
             _ => "",
         }
     }
