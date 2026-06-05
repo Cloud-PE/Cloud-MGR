@@ -53,5 +53,6 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           files: dist/cloud-pe-plugin-market.exe
           generate_release_notes: true
