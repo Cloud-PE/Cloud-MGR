@@ -7,7 +7,7 @@ build = "build.rs"
 
 [dependencies]
 # UI 改用 winui-rs / fluentpx：纯 Rust + Direct2D 的 WinUI 3 Fluent 控件库，取代原 eframe/egui。
-fluentpx = { path = "../winui-rs-main/crates/fluentpx" }
+fluentpx = { path = "vendor/fluentpx" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
