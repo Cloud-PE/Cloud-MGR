@@ -78,6 +78,6 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           & ./.github/scripts/upload-to-r2.ps1 `
-            -Prefix "Cloud-PE/Cloud-MGR" `
+            -Prefix "Cloud-PE/Cloud-PE文件/Cloud-MGR" `
             -Path "dist/CloudMGR.exe" `
             -PublicBaseUrl "https://r2.cloud-pe.cn"
